@@ -155,7 +155,7 @@
                 </h1>
 
                 @auth
-                    <form action="{{ route('logout') }}" method="POST">
+                    <form action="{{ route('logout') }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin logout?');">
                         @csrf
                         <button
                             type="submit"
