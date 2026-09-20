@@ -23,7 +23,8 @@ class PetugasController extends Controller
                 });
             })
             ->latest()
-            ->get();
+            ->paginate(10)
+            ->withQueryString();
 
         // Mengirim $peminjamans dan $peminjaman agar View Blade tidak error
         return view('petugas.peminjaman.index', [
@@ -88,7 +89,8 @@ class PetugasController extends Controller
                 });
             })
             ->latest()
-            ->get();
+            ->paginate(10)
+            ->withQueryString();
 
         // Mengirimkan $peminjamans, $pengembalian, dan $peminjaman agar View Blade aman
         return view('petugas.pengembalian.index', [
@@ -148,7 +150,7 @@ class PetugasController extends Controller
     {
         $peminjamans = Peminjaman::with(['user', 'detailPinjam.alat', 'pengembalian'])
             ->latest()
-            ->get();
+            ->paginate(10);
 
         // Mengirimkan variabel dalam berbagai format penamaan agar Blade View tidak error
         return view('petugas.laporan.index', [

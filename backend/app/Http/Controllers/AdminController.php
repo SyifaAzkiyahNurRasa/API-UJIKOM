@@ -427,7 +427,7 @@ class AdminController extends Controller
         $peminjaman = Peminjaman::with(['user', 'detailPinjam.alat'])
             ->whereIn('status', ['dipinjam', 'telat'])
             ->latest()
-            ->get();
+            ->paginate(10);
 
         foreach ($peminjaman as $pinjam) {
             if (

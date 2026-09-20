@@ -30,6 +30,8 @@
                     <span>
                         @if(auth()->check() && auth()->user()->role === 'petugas')
                             PANEL PETUGAS
+                        @elseif(auth()->check() && auth()->user()->role === 'peminjam')
+                            PANEL PEMINJAM
                         @else
                             PANEL ADMIN
                         @endif
@@ -125,6 +127,26 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
                             </svg>
                             <span>Cetak Laporan</span>
+                        </a>
+
+                    @elseif(auth()->check() && auth()->user()->role === 'peminjam')
+
+                        {{-- Katalog Alat --}}
+                        <a href="{{ route('peminjam.katalog') }}"
+                            class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 hover:translate-x-1 {{ request()->routeIs('peminjam.katalog') ? 'bg-slate-800/60 text-white border border-slate-700/50 shadow-sm' : 'text-slate-400 hover:bg-slate-800/40 hover:text-white' }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm3 0v12m6-12v12M4 10h16M4 14h16"></path>
+                            </svg>
+                            <span>Katalog Alat</span>
+                        </a>
+
+                        {{-- Riwayat Peminjaman --}}
+                        <a href="{{ route('peminjam.riwayat') }}"
+                            class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 hover:translate-x-1 {{ request()->routeIs('peminjam.riwayat') ? 'bg-slate-800/60 text-white border border-slate-700/50 shadow-sm' : 'text-slate-400 hover:bg-slate-800/40 hover:text-white' }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+                            </svg>
+                            <span>Riwayat Peminjaman</span>
                         </a>
 
                     @endif
