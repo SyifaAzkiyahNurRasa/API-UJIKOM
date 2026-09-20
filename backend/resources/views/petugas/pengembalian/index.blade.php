@@ -30,7 +30,11 @@
                                 {{ $item->user->name ?? '-' }}
                             </td>
                             <td class="py-3.5 px-4 font-medium text-slate-900">
-                                {{ $detail->alat->nama_alat ?? '-' }}
+                                @forelse($item->detailPinjam as $detail)
+                                    <div>{{ $detail->alat->nama_alat ?? '-' }}</div>
+                                @empty
+                                    -
+                                @endforelse
                             </td>
                             <td class="py-3.5 px-4 text-slate-600">
                                 {{ $item->tgl_kembali ?? $item->created_at->format('Y-m-d H:i') }}
