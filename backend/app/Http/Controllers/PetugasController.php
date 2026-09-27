@@ -92,7 +92,7 @@ class PetugasController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        // Mengirimkan $peminjamans, $pengembalian, dan $peminjaman agar View Blade aman
+        // Mengirimkan $peminjamans, $pengembalian, dan $peminjaman agar View aman
         return view('petugas.pengembalian.index', [
             'peminjamans'  => $peminjamans,
             'pengembalian' => $peminjamans,
@@ -106,7 +106,7 @@ class PetugasController extends Controller
     {
         $request->validate([
             'kondisi_kembali' => 'nullable|string',
-            'denda'           => 'nullable|integer',
+            'denda_kerusakan' => 'nullable|integer|min:0',
         ]);
 
         DB::beginTransaction();
@@ -118,12 +118,31 @@ class PetugasController extends Controller
                 return redirect()->back()->with('error', 'Status peminjaman ini tidak valid untuk dikembalikan.');
             }
 
+            // Perhitungan denda keterlambatan
+            $tanggalRencana = \Carbon\Carbon::parse($peminjaman->tgl_kembali_plan);
+            $tanggalSekarang = \Carbon\Carbon::today();
+
+            if ($tanggalSekarang->gt($tanggalRencana)) {
+                $hariTerlambat = $tanggalRencana->diffInDays($tanggalSekarang);
+            } else {
+                $hariTerlambat = 0;
+            }
+
+            $dendaPerHari = 5000;
+            $dendaKeterlambatan = $hariTerlambat * $dendaPerHari;
+
+            // Denda kerusakan
+            $dendaKerusakan = $request->denda_kerusakan ?? 0;
+
+            // Total denda
+            $totalDenda = $dendaKeterlambatan + $dendaKerusakan;
+
             // Simpan riwayat data pengembalian
             Pengembalian::create([
                 'peminjaman_id'   => $peminjaman->id,
                 'tgl_kembali'     => now(),
                 'kondisi_kembali' => $request->kondisi_kembali ?? 'Baik',
-                'denda'           => $request->denda ?? 0,
+                'denda'           => $totalDenda,
                 'petugas_id'      => auth()->id(),
             ]);
 

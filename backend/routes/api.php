@@ -35,6 +35,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/pengembalian/{pengembalian}', [PengembalianController::class, 'update']);  
         Route::delete('/pengembalian/{pengembalian}', [PengembalianController::class, 'destroy']); 
         Route::get('/log-aktivitas', [LogAktivitasController::class, 'index']); 
+        Route::get('/laporan-peminjaman', [LaporanController::class, 'index']); 
         // Route untuk hak akses admin   
     });     
 

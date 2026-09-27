@@ -116,7 +116,7 @@
         }
 
         $dendaPerHari = 5000;
-        $totalDenda = $hariTerlambat * $dendaPerHari;
+        $dendaKeterlambatan = $hariTerlambat * $dendaPerHari;
 
     @endphp
 
@@ -131,6 +131,7 @@
                 ? 'bg-red-50 border-red-200'
                 : 'bg-emerald-50 border-emerald-200' }}">
 
+            {{-- Tanggal Pengembalian --}}
             <div class="flex justify-between text-sm mb-2">
 
                 <span class="text-gray-600">
@@ -143,6 +144,7 @@
 
             </div>
 
+            {{-- Keterlambatan --}}
             <div class="flex justify-between text-sm mb-2">
 
                 <span class="text-gray-600">
@@ -158,35 +160,118 @@
 
             </div>
 
-            <div class="flex justify-between text-sm">
+            {{-- Denda Keterlambatan --}}
+            <div class="flex justify-between text-sm mb-4">
 
                 <span class="text-gray-600">
-                    Denda
+                    Denda Keterlambatan
                 </span>
 
-                <span class="font-bold text-lg
-                    {{ $totalDenda > 0 ? 'text-red-600' : 'text-emerald-600' }}">
-
-                    Rp {{ number_format($totalDenda, 0, ',', '.') }}
-
+                <span class="font-bold text-red-600">
+                    Rp {{ number_format($dendaKeterlambatan, 0, ',', '.') }}
                 </span>
 
             </div>
 
             @if($hariTerlambat > 0)
 
-                <div class="mt-3 text-xs text-red-700">
+                <div class="mb-4 text-xs text-red-700">
                     Terlambat {{ $hariTerlambat }} hari.
-                    Denda dihitung Rp 5.000 per hari.
+                    Denda keterlambatan Rp 5.000 per hari.
                 </div>
 
             @else
 
-                <div class="mt-3 text-xs text-emerald-700">
-                    Pengembalian tepat waktu. Tidak ada denda.
+                <div class="mb-4 text-xs text-emerald-700">
+                    Pengembalian tepat waktu. Tidak ada denda keterlambatan.
                 </div>
 
             @endif
+
+            {{-- Kondisi Saat Dikembalikan --}}
+            <div class="mb-4">
+
+                <label class="block text-gray-700 text-sm font-semibold mb-2">
+                    Kondisi Saat Dikembalikan
+                </label>
+
+                <select
+                    name="kondisi_kembali"
+                    id="kondisi_kembali"
+                    form="form-pengembalian"
+                    class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required>
+
+                    <option value="">-- Pilih Kondisi --</option>
+                    <option value="baik">Baik</option>
+                    <option value="rusak ringan">Rusak Ringan</option>
+                    <option value="rusak berat">Rusak Berat</option>
+                    <option value="tidak lengkap">Tidak Lengkap</option>
+
+                </select>
+
+            </div>
+
+            {{-- Denda Kerusakan --}}
+            <div class="mb-4">
+
+                <label class="block text-gray-700 text-sm font-semibold mb-2">
+                    Denda Kerusakan
+                </label>
+
+                <div class="relative">
+
+                    <span class="absolute left-3 top-2 text-gray-500 text-sm">
+                        Rp
+                    </span>
+
+                    <input
+                        type="number"
+                        name="denda_kerusakan"
+                        id="denda_kerusakan"
+                        form="form-pengembalian"
+                        value="0"
+                        min="0"
+                        step="1"
+                        class="w-full pl-10 pr-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Masukkan denda kerusakan">
+
+                </div>
+
+                <p class="mt-1 text-xs text-gray-500">
+                    Isi manual sesuai kondisi alat saat dikembalikan.
+                </p>
+
+            </div>
+
+            {{-- Total Denda --}}
+            <div class="border-t border-gray-200 pt-3">
+
+                <div class="flex justify-between items-center">
+
+                    <span class="text-gray-700 font-semibold">
+                        Total Denda
+                    </span>
+
+                    <span
+                        id="total_denda_tampilan"
+                        class="font-bold text-lg text-red-600">
+
+                        Rp {{ number_format($dendaKeterlambatan, 0, ',', '.') }}
+
+                    </span>
+
+                </div>
+
+            </div>
+
+            {{-- Nilai total yang dikirim ke controller --}}
+            <input
+                type="hidden"
+                name="denda"
+                id="denda"
+                form="form-pengembalian"
+                value="{{ $dendaKeterlambatan }}">
 
         </div>
 
@@ -203,6 +288,7 @@
         </a>
 
         <form
+            id="form-pengembalian"
             action="{{ route('admin.pengembalian.kembalikan', $peminjaman->id) }}"
             method="POST"
             onsubmit="return confirm('Yakin ingin memproses pengembalian alat ini?')">
@@ -223,5 +309,26 @@
     </div>
 
 </div>
+
+<script>
+    const dendaKeterlambatan = {{ $dendaKeterlambatan }};
+
+    const inputDendaKerusakan = document.getElementById('denda_kerusakan');
+    const inputDenda = document.getElementById('denda');
+    const tampilanTotalDenda = document.getElementById('total_denda_tampilan');
+
+    function hitungTotalDenda() {
+        const dendaKerusakan = parseInt(inputDendaKerusakan.value) || 0;
+
+        const totalDenda = dendaKeterlambatan + dendaKerusakan;
+
+        inputDenda.value = totalDenda;
+
+        tampilanTotalDenda.textContent =
+            'Rp ' + totalDenda.toLocaleString('id-ID');
+    }
+
+    inputDendaKerusakan.addEventListener('input', hitungTotalDenda);
+</script>
 
 @endsection

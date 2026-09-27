@@ -8,6 +8,7 @@ use App\Models\Kategori;
 use App\Models\User;
 use App\Models\Peminjaman;
 use App\Models\DetailPinjam;
+use App\Models\Pengembalian;
 use Illuminate\Support\Facades\DB;
 use App\Models\LogAktivitas;
 use Illuminate\Http\Request;
@@ -442,8 +443,14 @@ class AdminController extends Controller
     }
 
     // 7. Proses Pengembalian
-    public function kembalikan($id)
+    public function kembalikan(Request $request, $id)
     {
+        $request->validate([
+            'kondisi_kembali' => 'required|in:baik,rusak ringan,rusak berat,tidak lengkap',
+            'denda_kerusakan' => 'nullable|integer|min:0',
+            'denda'           => 'required|integer|min:0',
+        ]);
+
         $peminjaman = Peminjaman::with('detailPinjam.alat')->findOrFail($id);
 
         if (!in_array($peminjaman->status, ['dipinjam', 'telat'])) {
@@ -451,12 +458,23 @@ class AdminController extends Controller
         }
 
         DB::beginTransaction();
+
         try {
             $tanggalRencana = Carbon::parse($peminjaman->tgl_kembali_plan);
             $tanggalKembali = Carbon::today();
 
-            $hariTerlambat = $tanggalKembali->gt($tanggalRencana) ? $tanggalRencana->diffInDays($tanggalKembali) : 0;
-            $denda = $hariTerlambat * 5000; 
+            $hariTerlambat = $tanggalKembali->gt($tanggalRencana)
+                ? $tanggalRencana->diffInDays($tanggalKembali)
+                : 0;
+
+            // Denda keterlambatan tetap Rp5.000 per hari
+            $dendaKeterlambatan = $hariTerlambat * 5000;
+
+            // Denda kerusakan diisi manual
+            $dendaKerusakan = (int) ($request->denda_kerusakan ?? 0);
+
+            // Total denda
+            $totalDenda = $dendaKeterlambatan + $dendaKerusakan;
 
             foreach ($peminjaman->detailPinjam as $detail) {
                 if ($detail->alat) {
@@ -464,16 +482,29 @@ class AdminController extends Controller
                 }
             }
 
+            // Simpan data pengembalian
+            Pengembalian::create([
+                'peminjaman_id'   => $peminjaman->id,
+                'tgl_kembali'     => $tanggalKembali,
+                'kondisi_kembali' => $request->kondisi_kembali,
+                'denda'           => $totalDenda,
+                'petugas_id'      => auth()->id(),
+            ]);
+
+            // Update status dan total denda peminjaman
             $peminjaman->update([
                 'status' => 'dikembalikan',
-                'denda'  => $denda,
+                'denda'  => $totalDenda,
             ]);
 
             DB::commit();
+
             return redirect()->route('admin.pengembalian.index')
                 ->with('success', 'Pengembalian berhasil. Stok alat dikembalikan.');
+
         } catch (\Exception $e) {
             DB::rollBack();
+
             return back()->with('error', 'Pengembalian gagal: ' . $e->getMessage());
         }
     }
