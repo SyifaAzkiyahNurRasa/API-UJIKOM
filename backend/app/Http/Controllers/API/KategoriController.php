@@ -13,7 +13,7 @@ class KategoriController extends Controller
 {
     public function index(): JsonResponse     
     {         
-        $kategori = Kategori::latest()->get();         
+        $kategori = Kategori::latest()->paginate(5);
         return response()->json([             
             'message' => 'Daftar kategori berhasil diambil.',               
             'data' => KategoriResource::collection($kategori)         

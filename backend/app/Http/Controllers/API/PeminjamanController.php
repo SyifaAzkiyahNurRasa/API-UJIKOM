@@ -28,7 +28,7 @@ class PeminjamanController extends Controller
             $query->where('user_id', $user->id);
         }
 
-        $peminjaman = $query->latest()->get();
+        $peminjaman = $query->latest()->paginate(5);
 
         return response()->json([
             'message' => 'Daftar peminjaman berhasil diambil.',
@@ -253,7 +253,7 @@ class PeminjamanController extends Controller
         ])
             ->where('user_id', auth()->id())
             ->latest()
-            ->get();
+            ->paginate(5);
 
         return response()->json([
             'message' => 'Riwayat peminjaman Anda.',

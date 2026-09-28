@@ -23,7 +23,7 @@ class PetugasController extends Controller
                 });
             })
             ->latest()
-            ->paginate(10)
+            ->paginate(5)
             ->withQueryString();
 
         // Mengirim $peminjamans dan $peminjaman agar View Blade tidak error
@@ -89,7 +89,7 @@ class PetugasController extends Controller
                 });
             })
             ->latest()
-            ->paginate(10)
+            ->paginate(5)
             ->withQueryString();
 
         // Mengirimkan $peminjamans, $pengembalian, dan $peminjaman agar View aman
@@ -167,9 +167,9 @@ class PetugasController extends Controller
     // 6. Menampilkan halaman laporan
     public function indexLaporan()
     {
-        $peminjamans = Peminjaman::with(['user', 'detailPinjam.alat', 'pengembalian'])
+        $peminjamans = Peminjaman::with(['user', 'detailPinjams.alat', 'pengembalian'])
             ->latest()
-            ->paginate(10);
+            ->paginate(5);
 
         // Mengirimkan variabel dalam berbagai format penamaan agar Blade View tidak error
         return view('petugas.laporan.index', [

@@ -31,7 +31,7 @@ class PengembalianController extends Controller
             });
         }
 
-        $pengembalian = $query->latest()->get();
+        $pengembalian = $query->latest()->paginate(5);
 
         return response()->json([
             'message' => 'Riwayat pengembalian berhasil diambil.',

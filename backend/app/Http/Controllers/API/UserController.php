@@ -16,7 +16,7 @@ class UserController extends Controller
 {
     public function index() : JsonResponse 
     {
-        $users = User::latest()->get();                
+        $users = User::latest()->paginate(5);
                 return response()->json([             
             'message' => 'Daftar pengguna berhasil diambil.',             
             'data' => UserResource::collection($users)         

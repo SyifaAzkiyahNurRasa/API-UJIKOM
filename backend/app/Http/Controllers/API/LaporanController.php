@@ -77,7 +77,7 @@ class LaporanController extends Controller
         );
 
         // Pagination
-        $perPage = $request->input('per_page', 15);
+        $perPage = $request->input('per_page', 5);
 
         $laporan = $query
             ->latest()

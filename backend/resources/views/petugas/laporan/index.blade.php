@@ -39,7 +39,7 @@
                             <td class="py-3.5 px-4 text-slate-600">{{ $item->tgl_kembali_plan }}</td>
                             <td class="py-3.5 px-4">
                                 <ul class="list-disc list-inside text-xs text-slate-600">
-                                    @foreach($item->detailPinjam as $detail)
+                                    @foreach($item->detailPinjams as $detail)
                                         <li>{{ $detail->alat->nama_alat ?? 'Alat' }} ({{ $detail->jumlah }} pcs)</li>
                                     @endforeach
                                 </ul>

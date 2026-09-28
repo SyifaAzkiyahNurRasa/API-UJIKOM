@@ -13,11 +13,11 @@ class LogAktivitasController extends Controller
     {
         $logs = LogAktivitas::with('user')
             ->latest()
-            ->get();
+            ->paginate(5);
 
         return response()->json([
             'message' => 'Seluruh catatan log aktivitas berhasil diambil.',
-            'total_data' => $logs->count(),
+            'total_data' => $logs->total(),
             'data' => LogAktivitasResource::collection($logs),
         ]);
     }

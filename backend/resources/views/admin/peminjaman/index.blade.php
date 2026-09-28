@@ -62,7 +62,7 @@
                             </td>
                             <td class="py-3 px-4 border-b">
                                 <ul class="list-disc list-inside space-y-1">
-                                    @foreach($item->detailPinjam as $detail)
+                                    @foreach($item->detailPinjams as $detail)
                                         <li>
                                             <span class="font-semibold">{{ $detail->alat->nama_alat ?? 'Alat Dihapus' }}</span>
                                             <span class="text-xs bg-gray-200 px-1.5 py-0.5 rounded">{{ $detail->jumlah }} pcs</span>

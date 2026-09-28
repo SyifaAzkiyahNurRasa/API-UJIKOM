@@ -111,7 +111,7 @@
 
                             <div class="space-y-1.5">
 
-                                @foreach($pinjam->detailPinjam as $detail)
+                                @foreach($pinjam->detailPinjams as $detail)
 
                                     <div class="flex items-center gap-2">
                                         <span class="font-medium text-slate-700">

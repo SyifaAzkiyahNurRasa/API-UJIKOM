@@ -37,7 +37,7 @@ class AdminController extends Controller
                     });
             })
             ->latest()
-            ->paginate(10)
+            ->paginate(5)
             ->withQueryString();
 
         return view('admin.alat.index', compact('alat', 'search'));
@@ -145,7 +145,7 @@ class AdminController extends Controller
                 ->orWhere('role', 'like', "%{$search}%");
         })
             ->latest()
-            ->paginate(10)
+            ->paginate(5)
             ->withQueryString();
 
         return view('admin.user.index', compact('users', 'search'));
@@ -298,7 +298,7 @@ class AdminController extends Controller
     {
         $search = $request->input('search');
 
-        $peminjaman = Peminjaman::with(['user', 'detailPinjam.alat'])
+        $peminjaman = Peminjaman::with(['user', 'detailPinjams.alat'])
             ->when($search, function ($query, $search) {
                 return $query->where('status', 'like', "%{$search}%")
                     ->orWhereHas('user', function ($q) use ($search) {
@@ -306,7 +306,7 @@ class AdminController extends Controller
                     });
             })
             ->latest()
-            ->paginate(10)
+            ->paginate(5)
             ->withQueryString();
 
         return view('admin.peminjaman.index', compact('peminjaman', 'search'));
@@ -425,10 +425,10 @@ class AdminController extends Controller
     // 6. Menampilkan daftar pengembalian
     public function indexPengembalian()
     {
-        $peminjaman = Peminjaman::with(['user', 'detailPinjam.alat'])
+        $peminjaman = Peminjaman::with(['user', 'detailPinjams.alat'])
             ->whereIn('status', ['dipinjam', 'telat'])
             ->latest()
-            ->paginate(10);
+            ->paginate(5);
 
         foreach ($peminjaman as $pinjam) {
             if (

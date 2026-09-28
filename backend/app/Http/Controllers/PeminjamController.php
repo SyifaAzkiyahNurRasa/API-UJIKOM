@@ -13,7 +13,7 @@ class PeminjamController extends Controller
     // Melihat daftar/katalog alat yang tersedia
     public function katalogAlat()
     {
-        $alats = Alat::with('kategori')->where('stok', '>', 0)->get();
+        $alats = Alat::with('kategori')->where('stok', '>', 0)->paginate(5);
         return view('peminjam.katalog', compact('alats'));
     }
 
@@ -59,7 +59,7 @@ class PeminjamController extends Controller
         $peminjamans = Peminjaman::with('detailPinjams.alat')
             ->where('user_id', auth()->id())
             ->latest()
-            ->get();
+            ->paginate(5);
 
         return view('peminjam.riwayat', compact('peminjamans'));
     }

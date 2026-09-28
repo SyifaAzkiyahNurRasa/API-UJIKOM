@@ -16,7 +16,7 @@ class AlatController extends Controller
     public function index(): JsonResponse
     {
         // Tetap menggunakan eager loading untuk mencegah N+1 Query 
-        $alat = Alat::with('kategori')->latest()->get();                
+        $alat = Alat::with('kategori')->latest()->paginate(5);
         return response()->json([             
             'message' => 'Daftar alat berhasil diambil.',             
             'data' => AlatResource::collection($alat)         
@@ -86,7 +86,7 @@ class AlatController extends Controller
     
     
     public function katalog(): JsonResponse     {         
-        $alat = Alat::with('kategori')->tersedia()->latest()->get();         
+        $alat = Alat::with('kategori')->tersedia()->latest()->paginate(5);
         return response()->json([             
             'message' => 'Katalog alat tersedia.',             
             'data' => AlatResource::collection($alat)         
