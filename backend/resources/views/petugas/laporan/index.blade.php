@@ -26,6 +26,7 @@
                         <th class="py-3.5 px-4 font-semibold">Peminjam</th>
                         <th class="py-3.5 px-4 font-semibold">Tgl Pinjam</th>
                         <th class="py-3.5 px-4 font-semibold">Rencana Kembali</th>
+                        <th class="py-3.5 px-4 font-semibold">Tanggal Dikembalikan</th>
                         <th class="py-3.5 px-4 font-semibold">Alat</th>
                         <th class="py-3.5 px-4 font-semibold">Status</th>
                     </tr>
@@ -35,8 +36,13 @@
                         <tr class="hover:bg-slate-50/50 transition">
                             <td class="py-3.5 px-4 font-medium text-slate-500">{{ $index + 1 }}</td>
                             <td class="py-3.5 px-4 font-medium text-slate-900">{{ $item->user->name ?? '-' }}</td>
-                            <td class="py-3.5 px-4 text-slate-600">{{ $item->tgl_pinjam }}</td>
-                            <td class="py-3.5 px-4 text-slate-600">{{ $item->tgl_kembali_plan }}</td>
+                            <td class="py-3.5 px-4 text-slate-600">{{ \Carbon\Carbon::parse($item->tgl_pinjam)->locale('id')->translatedFormat('d F Y, H:i') }}</td>
+                            <td class="py-3.5 px-4 text-slate-600">{{ \Carbon\Carbon::parse($item->tgl_kembali_plan)->locale('id')->translatedFormat('d F Y, H:i') }}</td>
+                            <td class="py-3.5 px-4 text-slate-600">
+                                {{ $item->pengembalian?->tgl_kembali
+                                    ? \Carbon\Carbon::parse($item->pengembalian->tgl_kembali)->locale('id')->translatedFormat('d F Y, H:i')
+                                    : '-' }}
+                            </td>
                             <td class="py-3.5 px-4">
                                 <ul class="list-disc list-inside text-xs text-slate-600">
                                     @foreach($item->detailPinjams as $detail)
@@ -52,7 +58,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="py-8 text-center text-slate-400 text-sm">
+                            <td colspan="7" class="py-8 text-center text-slate-400 text-sm">
                                 Belum ada data untuk laporan.
                             </td>
                         </tr>

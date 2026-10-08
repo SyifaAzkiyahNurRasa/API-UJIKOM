@@ -8,6 +8,7 @@ use App\Http\Resources\PeminjamanResource;
 use App\Models\Alat;
 use App\Models\DetailPinjam;
 use App\Models\Peminjaman;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -41,11 +42,16 @@ class PeminjamanController extends Controller
         try {
             $peminjaman = DB::transaction(function () use ($request) {
                 $user = auth()->user();
+                $tglKembaliPlan = $request->tgl_kembali_plan;
+
+                if (strlen($tglKembaliPlan) === 10) {
+                    $tglKembaliPlan = Carbon::parse($tglKembaliPlan)->endOfDay();
+                }
 
                 $peminjaman = Peminjaman::create([
                     'user_id' => $user->id,
-                    'tgl_pinjam' => now()->toDateString(),
-                    'tgl_kembali_plan' => $request->tgl_kembali_plan,
+                    'tgl_pinjam' => now(),
+                    'tgl_kembali_plan' => $tglKembaliPlan,
                     'status' => 'diajukan',
                 ]);
 
@@ -131,8 +137,14 @@ class PeminjamanController extends Controller
 
         try {
             DB::transaction(function () use ($request, $peminjaman) {
+                $tglKembaliPlan = $request->tgl_kembali_plan;
+
+                if (strlen($tglKembaliPlan) === 10) {
+                    $tglKembaliPlan = Carbon::parse($tglKembaliPlan)->endOfDay();
+                }
+
                 $peminjaman->update([
-                    'tgl_kembali_plan' => $request->tgl_kembali_plan,
+                    'tgl_kembali_plan' => $tglKembaliPlan,
                 ]);
 
                 $peminjaman->detailPinjam()->delete();

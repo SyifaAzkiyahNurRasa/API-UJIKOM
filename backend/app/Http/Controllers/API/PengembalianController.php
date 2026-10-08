@@ -90,9 +90,9 @@ class PengembalianController extends Controller
                 // Cek keterlambatan menggunakan Carbon
                 $tglKembaliPlan = Carbon::parse(
                     $peminjaman->tgl_kembali_plan
-                )->startOfDay();
+                );
 
-                $hariIni = Carbon::now()->startOfDay();
+                $hariIni = Carbon::now();
 
                 $statusPeminjamanBaru = $hariIni->greaterThan($tglKembaliPlan)
                     ? 'telat'
@@ -101,7 +101,7 @@ class PengembalianController extends Controller
                 // 1. Insert data ke tabel pengembalian
                 $pengembalian = Pengembalian::create([
                     'peminjaman_id' => $peminjaman->id,
-                    'tgl_kembali' => now()->toDateString(),
+                    'tgl_kembali' => now(),
                     'kondisi_kembali' => $request->kondisi_kembali,
                     'denda' => $request->denda ?? 0,
                     'petugas_id' => auth()->id(),

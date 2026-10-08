@@ -13,7 +13,7 @@ class StorePeminjamanRequest extends FormRequest
         public function rules(): array     
         {         
             return [             
-                'tgl_kembali_plan' => ['required', 'date', 'date_format:Y-m-d', 'after_or_equal:today'],             
+                'tgl_kembali_plan' => ['required', 'date', 'after_or_equal:today'],
                 'items' => ['required', 'array', 'min:1'],             
                 'items.*.alat_id' => ['required', 'integer', Rule::exists('alat', 'id')],             
                 'items.*.jumlah' => ['required', 'integer', 'min:1'],         
@@ -23,7 +23,7 @@ class StorePeminjamanRequest extends FormRequest
         {         
             return [             
                 'tgl_kembali_plan.required' => 'Tanggal rencana pengembalian wajib diisi.',             
-                'tgl_kembali_plan.date_format' => 'Format tanggal harus Tahun-Bulan-Tanggal (YYYY-MM-DD).',             
+                'tgl_kembali_plan.date' => 'Format tanggal dan waktu tidak valid.',
                 'tgl_kembali_plan.after_or_equal' => 'Tanggal rencana kembali tidak boleh di masa lalu.',             
                 'items.required' => 'Anda harus memilih minimal satu alat untuk dipinjam.',             
                 'items.array' => 'Format data item yang dikirim harus berupa daftar/list.',             

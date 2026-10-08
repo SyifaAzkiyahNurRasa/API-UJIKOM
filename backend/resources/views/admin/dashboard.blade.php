@@ -12,8 +12,15 @@
 
     <!-- Tabel Log Aktivitas -->
     <div class="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200">
-        <div class="p-5 border-b border-gray-200 bg-gray-50">
+        <div class="p-5 border-b border-gray-200 bg-gray-50 flex flex-col md:flex-row justify-between items-center gap-4">
             <h3 class="text-lg font-bold text-gray-800">Log Aktivitas Terbaru</h3>
+            <form action="{{ route('admin.dashboard') }}" method="GET" class="flex w-full md:w-80">
+                <input type="text" name="search" value="{{ $search }}" placeholder="Cari user / aktivitas..."
+                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <button type="submit" class="bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 text-sm font-semibold rounded-r-lg transition">
+                    Cari
+                </button>
+            </form>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
@@ -33,11 +40,19 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="3" class="py-4 text-center text-gray-500">Belum ada log aktivitas.</td>
+                            <td colspan="3" class="py-4 text-center text-gray-500">
+                                {{ $search ? 'Tidak ada log aktivitas yang cocok.' : 'Belum ada log aktivitas.' }}
+                            </td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
+        </div>
+        <div class="p-4 border-t border-gray-200 bg-gray-50 flex flex-col sm:flex-row justify-between items-center gap-3 text-sm text-gray-600">
+            <span>
+                Menampilkan {{ $logs->firstItem() ?? 0 }}-{{ $logs->lastItem() ?? 0 }} dari {{ $logs->total() }} log
+            </span>
+            {{ $logs->links() }}
         </div>
     </div>
 @endsection

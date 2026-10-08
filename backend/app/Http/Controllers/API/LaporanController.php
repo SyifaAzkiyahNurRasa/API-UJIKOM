@@ -62,8 +62,8 @@ class LaporanController extends Controller
             $request->filled('end_date'),
             function ($q) use ($request) {
                 $q->whereBetween('tgl_pinjam', [
-                    $request->start_date,
-                    $request->end_date,
+                    \Carbon\Carbon::parse($request->start_date)->startOfDay(),
+                    \Carbon\Carbon::parse($request->end_date)->endOfDay(),
                 ]);
             }
         );

@@ -2,181 +2,280 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Alat;
 use App\Models\Peminjaman;
 use App\Models\Pengembalian;
-use App\Models\Alat;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class PetugasController extends Controller
 {
-    // 1. Menampilkan daftar pengajuan peminjaman (Status: diajukan)
+    /**
+     * Menampilkan daftar pengajuan peminjaman.
+     */
     public function indexPeminjaman(Request $request)
     {
         $search = $request->input('search');
 
-        $peminjamans = Peminjaman::with(['user', 'detailPinjam.alat'])
-            ->where('status', 'diajukan')
+        $peminjaman = Peminjaman::with([
+            'user',
+            'detailPinjams.alat'
+        ])
             ->when($search, function ($query, $search) {
-                return $query->whereHas('user', function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%");
+                $query->where(function ($q) use ($search) {
+                    $q->where('status', 'like', "%{$search}%")
+                        ->orWhereHas('user', function ($userQuery) use ($search) {
+                            $userQuery->where('name', 'like', "%{$search}%");
+                        });
                 });
             })
             ->latest()
             ->paginate(5)
             ->withQueryString();
 
-        // Mengirim $peminjamans dan $peminjaman agar View Blade tidak error
-        return view('petugas.peminjaman.index', [
-            'peminjamans' => $peminjamans,
-            'peminjaman'  => $peminjamans,
-            'search'      => $search
-        ]);
+        return view('petugas.peminjaman.index', compact(
+            'peminjaman',
+            'search'
+        ));
     }
 
-    // 2. Menyetujui peminjaman (Ubah status ke dipinjam & kurangi stok alat)
+    /**
+     * Menyetujui peminjaman.
+     */
     public function setujuiPeminjaman($id)
     {
         DB::beginTransaction();
 
         try {
-            // Diubah dari detailPinjams ke detailPinjam
-            $peminjaman = Peminjaman::with('detailPinjam')->findOrFail($id);
-            $peminjaman->update(['status' => 'dipinjam']);
+            $peminjaman = Peminjaman::with('detailPinjams')
+                ->findOrFail($id);
 
-            // Kurangi stok alat secara otomatis
-            foreach ($peminjaman->detailPinjam as $detail) {
+            if ($peminjaman->status !== 'diajukan') {
+                return redirect()->back()->with(
+                    'error',
+                    'Peminjaman tidak dapat disetujui karena status sudah berubah.'
+                );
+            }
+
+            $peminjaman->update([
+                'status' => 'dipinjam'
+            ]);
+
+            foreach ($peminjaman->detailPinjams as $detail) {
                 $alat = Alat::findOrFail($detail->alat_id);
+
                 $alat->stok -= $detail->jumlah;
                 $alat->save();
             }
 
             DB::commit();
-            return redirect()->back()->with('success', 'Peminjaman disetujui dan stok alat dikurangi.');
+
+            return redirect()->back()->with(
+                'success',
+                'Peminjaman disetujui dan stok alat dikurangi.'
+            );
         } catch (\Exception $e) {
-            DB::rollback();
-            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+            DB::rollBack();
+
+            return redirect()->back()->with(
+                'error',
+                'Terjadi kesalahan: ' . $e->getMessage()
+            );
         }
     }
 
-    // 3. Menolak peminjaman
-    public function tolakPeminjaman($id)
-    {
-        try {
-            $peminjaman = Peminjaman::findOrFail($id);
-            
-            if ($peminjaman->status === 'diajukan') {
-                $peminjaman->delete();
-                return redirect()->back()->with('success', 'Pengajuan peminjaman berhasil ditolak.');
-            }
-
-            return redirect()->back()->with('error', 'Status peminjaman sudah berubah.');
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
-        }
-    }
-
-    // 4. Menampilkan daftar alat yang sedang dipinjam (Status: dipinjam) untuk dipantau/dikembalikan
+    /**
+     * Menampilkan daftar peminjaman yang dapat dikembalikan.
+     */
     public function indexPengembalian(Request $request)
     {
-        $search = $request->input('search');
-
-        $peminjamans = Peminjaman::with(['user', 'detailPinjam.alat'])
-            ->where('status', 'dipinjam')
-            ->when($search, function ($query, $search) {
-                return $query->whereHas('user', function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%");
-                });
-            })
+        $pengembalian = Peminjaman::with([
+            'user',
+            'detailPinjams.alat',
+            'pengembalian'
+        ])
+            ->whereIn('status', ['dipinjam', 'telat'])
             ->latest()
-            ->paginate(5)
+            ->paginate(10)
             ->withQueryString();
 
-        // Mengirimkan $peminjamans, $pengembalian, dan $peminjaman agar View aman
-        return view('petugas.pengembalian.index', [
-            'peminjamans'  => $peminjamans,
-            'pengembalian' => $peminjamans,
-            'peminjaman'   => $peminjamans,
-            'search'       => $search
-        ]);
+        return view(
+            'petugas.pengembalian.index',
+            compact('pengembalian')
+        );
     }
 
-    // 5. Memproses pengembalian alat
+    /**
+     * Menampilkan form pengembalian.
+     */
+    public function createPengembalian($id)
+    {
+        $peminjaman = Peminjaman::with([
+            'user',
+            'detailPinjams.alat'
+        ])
+            ->whereIn('status', ['dipinjam', 'telat'])
+            ->findOrFail($id);
+
+        $tglKembaliPlan = Carbon::parse(
+            $peminjaman->tgl_kembali_plan
+        );
+
+        $tglSekarang = Carbon::now();
+
+        $jumlahHariTerlambat = 0;
+        $dendaKeterlambatan = 0;
+
+        if ($tglSekarang->greaterThan($tglKembaliPlan)) {
+            $jumlahHariTerlambat = $tglKembaliPlan
+                ->copy()
+                ->startOfDay()
+                ->diffInDays($tglSekarang->copy()->startOfDay());
+
+            $dendaKeterlambatan = $jumlahHariTerlambat * 5000;
+        }
+
+        return view('petugas.pengembalian.create', compact(
+            'peminjaman',
+            'jumlahHariTerlambat',
+            'dendaKeterlambatan'
+        ));
+    }
+
+    /**
+     * Memproses pengembalian alat.
+     */
     public function prosesPengembalian(Request $request, $peminjamanId)
     {
         $request->validate([
-            'kondisi_kembali' => 'nullable|string',
-            'denda_kerusakan' => 'nullable|integer|min:0',
+            'kondisi_kembali' => 'required|string',
+            'denda' => 'nullable|integer|min:0',
         ]);
 
         DB::beginTransaction();
+
         try {
-            // Diubah dari detailPinjams ke detailPinjam
-            $peminjaman = Peminjaman::with('detailPinjam')->findOrFail($peminjamanId);
+            $peminjaman = Peminjaman::with('detailPinjams')
+                ->findOrFail($peminjamanId);
 
-            if ($peminjaman->status !== 'dipinjam') {
-                return redirect()->back()->with('error', 'Status peminjaman ini tidak valid untuk dikembalikan.');
+            if (!in_array($peminjaman->status, ['dipinjam', 'telat'])) {
+                return redirect()->back()->with(
+                    'error',
+                    'Peminjaman ini sudah tidak dapat diproses.'
+                );
             }
 
-            // Perhitungan denda keterlambatan
-            $tanggalRencana = \Carbon\Carbon::parse($peminjaman->tgl_kembali_plan);
-            $tanggalSekarang = \Carbon\Carbon::today();
+            // Hitung denda keterlambatan otomatis
+            $tglKembaliPlan = Carbon::parse(
+                $peminjaman->tgl_kembali_plan
+            );
 
-            if ($tanggalSekarang->gt($tanggalRencana)) {
-                $hariTerlambat = $tanggalRencana->diffInDays($tanggalSekarang);
-            } else {
-                $hariTerlambat = 0;
+            $tglSekarang = Carbon::now();
+
+            $dendaKeterlambatan = 0;
+
+            if ($tglSekarang->greaterThan($tglKembaliPlan)) {
+                $jumlahHariTerlambat = $tglKembaliPlan
+                    ->copy()
+                    ->startOfDay()
+                    ->diffInDays($tglSekarang->copy()->startOfDay());
+
+                $dendaKeterlambatan = $jumlahHariTerlambat * 5000;
             }
 
-            $dendaPerHari = 5000;
-            $dendaKeterlambatan = $hariTerlambat * $dendaPerHari;
-
-            // Denda kerusakan
-            $dendaKerusakan = $request->denda_kerusakan ?? 0;
+            // Denda kerusakan yang diisi oleh petugas
+            $dendaKerusakan = (int) ($request->denda ?? 0);
 
             // Total denda
             $totalDenda = $dendaKeterlambatan + $dendaKerusakan;
 
-            // Simpan riwayat data pengembalian
+            // Simpan data pengembalian
             Pengembalian::create([
-                'peminjaman_id'   => $peminjaman->id,
-                'tgl_kembali'     => now(),
-                'kondisi_kembali' => $request->kondisi_kembali ?? 'Baik',
-                'denda'           => $totalDenda,
-                'petugas_id'      => auth()->id(),
+                'peminjaman_id' => $peminjaman->id,
+                'tgl_kembali' => now(),
+                'kondisi_kembali' => $request->kondisi_kembali,
+                'denda' => $totalDenda,
+                'petugas_id' => auth()->id(),
             ]);
 
-            // Update status peminjaman jadi selesai
-            $peminjaman->update(['status' => 'selesai']);
+            // Ubah status menjadi dikembalikan
+            $peminjaman->update([
+                'status' => 'dikembalikan'
+            ]);
 
-            // Kembalikan stok alat ke inventaris
-            foreach ($peminjaman->detailPinjam as $detail) {
+            // Kembalikan stok alat
+            foreach ($peminjaman->detailPinjams as $detail) {
                 $alat = Alat::findOrFail($detail->alat_id);
+
                 $alat->stok += $detail->jumlah;
                 $alat->save();
             }
 
             DB::commit();
-            return redirect()->back()->with('success', 'Pengembalian berhasil dicatat dan stok dipulihkan.');
+
+            return redirect()
+                ->route('petugas.pengembalian.index')
+                ->with(
+                    'success',
+                    'Pengembalian berhasil dicatat. Total denda: Rp ' .
+                    number_format($totalDenda, 0, ',', '.')
+                );
         } catch (\Exception $e) {
-            DB::rollback();
-            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+            DB::rollBack();
+
+            return redirect()->back()->with(
+                'error',
+                'Terjadi kesalahan: ' . $e->getMessage()
+            );
         }
     }
 
-    // 6. Menampilkan halaman laporan
-    public function indexLaporan()
+    /**
+     * Menolak pengajuan peminjaman.
+     */
+    public function tolakPeminjaman($id)
     {
-        $peminjamans = Peminjaman::with(['user', 'detailPinjams.alat', 'pengembalian'])
-            ->latest()
-            ->paginate(5);
+        try {
+            $peminjaman = Peminjaman::findOrFail($id);
 
-        // Mengirimkan variabel dalam berbagai format penamaan agar Blade View tidak error
+            if ($peminjaman->status === 'diajukan') {
+                $peminjaman->delete();
+
+                return redirect()->back()->with(
+                    'success',
+                    'Pengajuan peminjaman berhasil ditolak.'
+                );
+            }
+
+            return redirect()->back()->with(
+                'error',
+                'Status peminjaman sudah berubah.'
+            );
+        } catch (\Exception $e) {
+            return redirect()->back()->with(
+                'error',
+                'Terjadi kesalahan: ' . $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * Menampilkan laporan peminjaman.
+     */
+    public function indexLaporan(Request $request)
+    {
+        $laporan = Peminjaman::with([
+            'user',
+            'detailPinjams.alat',
+            'pengembalian',
+        ])
+            ->latest()
+            ->paginate(10)
+            ->withQueryString();
+
         return view('petugas.laporan.index', [
-            'peminjamans' => $peminjamans,
-            'peminjaman'  => $peminjamans,
-            'laporan'     => $peminjamans,
-            'laporans'    => $peminjamans,
+            'peminjaman' => $laporan
         ]);
     }
 }

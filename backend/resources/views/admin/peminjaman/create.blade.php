@@ -29,12 +29,12 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
                 <label class="block text-gray-700 text-sm font-semibold mb-2">Tanggal Pinjam</label>
-                <input type="date" name="tgl_pinjam" value="{{ old('tgl_pinjam', date('Y-m-d')) }}" required
+                <input type="datetime-local" name="tgl_pinjam" value="{{ old('tgl_pinjam', now()->format('Y-m-d\TH:i')) }}" required
                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
             <div>
                 <label class="block text-gray-700 text-sm font-semibold mb-2">Rencana Tanggal Kembali</label>
-                <input type="date" name="tgl_kembali_plan" value="{{ old('tgl_kembali_plan', date('Y-m-d', strtotime('+3 days'))) }}" required
+                <input type="datetime-local" name="tgl_kembali_plan" value="{{ old('tgl_kembali_plan', now()->addDays(3)->format('Y-m-d\TH:i')) }}" required
                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
         </div>

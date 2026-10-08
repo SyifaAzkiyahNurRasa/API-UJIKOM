@@ -71,8 +71,11 @@
                                 </ul>
                             </td>
                             <td class="py-3 px-4 border-b text-xs text-gray-600">
-                                <span class="block">Pinjam: {{ $item->tgl_pinjam }}</span>
-                                <span class="block font-semibold">Rencana: {{ $item->tgl_kembali_plan }}</span>
+                                <span class="block">Pinjam: {{ \Carbon\Carbon::parse($item->tgl_pinjam)->locale('id')->translatedFormat('d F Y, H:i') }}</span>
+                                <span class="block font-semibold">Rencana: {{ \Carbon\Carbon::parse($item->tgl_kembali_plan)->locale('id')->translatedFormat('d F Y, H:i') }}</span>
+                                @if($item->pengembalian?->tgl_kembali)
+                                    <span class="block">Dikembalikan: {{ \Carbon\Carbon::parse($item->pengembalian->tgl_kembali)->locale('id')->translatedFormat('d F Y, H:i') }}</span>
+                                @endif
                             </td>
                             <td class="py-3 px-4 border-b">
                                 <span class="px-2.5 py-1 text-xs font-semibold rounded-full

@@ -17,10 +17,23 @@ use Illuminate\Support\Facades\Hash;
 class AdminController extends Controller
 {
     // Menampilkan dashboard admin dan log aktivitas
-    public function index()
+    public function index(Request $request)
     {
-        $logs = LogAktivitas::with('user')->latest()->take(10)->get();
-        return view('admin.dashboard', compact('logs'));
+        $search = $request->input('search');
+        $logs = LogAktivitas::with('user')
+            ->when($search, function ($query, $search) {
+                $query->where(function ($query) use ($search) {
+                    $query->where('aktivitas', 'like', "%{$search}%")
+                        ->orWhereHas('user', function ($query) use ($search) {
+                            $query->where('name', 'like', "%{$search}%");
+                        });
+                });
+            })
+            ->latest()
+            ->paginate(10)
+            ->withQueryString();
+
+        return view('admin.dashboard', compact('logs', 'search'));
     }
 
     // CRUD Alat: Menampilkan daftar alat
@@ -298,7 +311,7 @@ class AdminController extends Controller
     {
         $search = $request->input('search');
 
-        $peminjaman = Peminjaman::with(['user', 'detailPinjams.alat'])
+        $peminjaman = Peminjaman::with(['user', 'detailPinjams.alat', 'pengembalian'])
             ->when($search, function ($query, $search) {
                 return $query->where('status', 'like', "%{$search}%")
                     ->orWhereHas('user', function ($q) use ($search) {
@@ -312,13 +325,20 @@ class AdminController extends Controller
         return view('admin.peminjaman.index', compact('peminjaman', 'search'));
     }
 
+    public function showPeminjaman($id)
+    {
+        $peminjaman = Peminjaman::with(['user', 'detailPinjams.alat', 'pengembalian'])->findOrFail($id);
+
+        return view('admin.peminjaman.show', compact('peminjaman'));
+    }
+
     // 2. Menampilkan form tambah peminjaman ($user dan $alat)
     public function createPeminjaman()
     {
-        $user = User::where('role', 'peminjam')->get(); 
-        $alat = Alat::where('stok', '>', 0)->get();
+        $users = User::where('role', 'peminjam')->get();
+        $alats = Alat::where('stok', '>', 0)->get();
 
-        return view('admin.peminjaman.create', compact('user', 'alat'));
+        return view('admin.peminjaman.create', compact('users', 'alats'));
     }
 
     // 3. Menyimpan data peminjaman baru
@@ -336,10 +356,15 @@ class AdminController extends Controller
 
         DB::beginTransaction();
         try {
+            $tglKembaliPlan = $request->tgl_kembali_plan;
+            if (strlen($tglKembaliPlan) === 10) {
+                $tglKembaliPlan = Carbon::parse($tglKembaliPlan)->endOfDay();
+            }
+
             $peminjaman = Peminjaman::create([
                 'user_id'          => $request->user_id,
                 'tgl_pinjam'       => $request->tgl_pinjam,
-                'tgl_kembali_plan' => $request->tgl_kembali_plan,
+                'tgl_kembali_plan' => $tglKembaliPlan,
                 'status'           => 'diajukan',
             ]);
 
@@ -369,7 +394,7 @@ class AdminController extends Controller
     // 4. Memperbarui status peminjaman
     public function updateStatusPeminjaman(Request $request, $id)
     {
-        $peminjaman = Peminjaman::with('detailPinjam.alat')->findOrFail($id);
+        $peminjaman = Peminjaman::with('detailPinjams.alat')->findOrFail($id);
 
         $request->validate([
             'status' => 'required|in:diajukan,dipinjam,dikembalikan,telat',
@@ -381,7 +406,7 @@ class AdminController extends Controller
             $statusBaru = $request->status;
 
             if ($statusLama != 'dipinjam' && $statusBaru == 'dipinjam') {
-                foreach ($peminjaman->detailPinjam as $detail) {
+                foreach ($peminjaman->detailPinjams as $detail) {
                     $alatData = $detail->alat;
                     if ($alatData->stok < $detail->jumlah) {
                         throw new \Exception("Stok alat {$alatData->nama_alat} tidak mencukupi untuk dipinjam.");
@@ -389,7 +414,7 @@ class AdminController extends Controller
                     $alatData->decrement('stok', $detail->jumlah);
                 }
             } elseif ($statusLama == 'dipinjam' && in_array($statusBaru, ['dikembalikan', 'selesai'])) {
-                foreach ($peminjaman->detailPinjam as $detail) {
+                foreach ($peminjaman->detailPinjams as $detail) {
                     $detail->alat->increment('stok', $detail->jumlah);
                 }
             }
@@ -407,10 +432,10 @@ class AdminController extends Controller
     // 5. Menghapus data peminjaman
     public function destroyPeminjaman($id)
     {
-        $peminjaman = Peminjaman::with('detailPinjam')->findOrFail($id);
+        $peminjaman = Peminjaman::with('detailPinjams')->findOrFail($id);
 
         if ($peminjaman->status == 'dipinjam') {
-            foreach ($peminjaman->detailPinjam as $detail) {
+            foreach ($peminjaman->detailPinjams as $detail) {
                 if ($detail->alat) {
                     $detail->alat->increment('stok', $detail->jumlah);
                 }
@@ -433,7 +458,7 @@ class AdminController extends Controller
         foreach ($peminjaman as $pinjam) {
             if (
                 $pinjam->status === 'dipinjam' &&
-                Carbon::today()->gt(Carbon::parse($pinjam->tgl_kembali_plan))
+                Carbon::now()->gt(Carbon::parse($pinjam->tgl_kembali_plan))
             ) {
                 $pinjam->update(['status' => 'telat']);
             }
@@ -451,7 +476,7 @@ class AdminController extends Controller
             'denda'           => 'required|integer|min:0',
         ]);
 
-        $peminjaman = Peminjaman::with('detailPinjam.alat')->findOrFail($id);
+        $peminjaman = Peminjaman::with('detailPinjams.alat')->findOrFail($id);
 
         if (!in_array($peminjaman->status, ['dipinjam', 'telat'])) {
             return back()->with('error', 'Peminjaman ini sudah dikembalikan.');
@@ -461,10 +486,10 @@ class AdminController extends Controller
 
         try {
             $tanggalRencana = Carbon::parse($peminjaman->tgl_kembali_plan);
-            $tanggalKembali = Carbon::today();
+            $tanggalKembali = Carbon::now();
 
             $hariTerlambat = $tanggalKembali->gt($tanggalRencana)
-                ? $tanggalRencana->diffInDays($tanggalKembali)
+                ? $tanggalRencana->copy()->startOfDay()->diffInDays($tanggalKembali->copy()->startOfDay())
                 : 0;
 
             // Denda keterlambatan tetap Rp5.000 per hari
@@ -476,7 +501,7 @@ class AdminController extends Controller
             // Total denda
             $totalDenda = $dendaKeterlambatan + $dendaKerusakan;
 
-            foreach ($peminjaman->detailPinjam as $detail) {
+            foreach ($peminjaman->detailPinjams as $detail) {
                 if ($detail->alat) {
                     $detail->alat->increment('stok', $detail->jumlah);
                 }
@@ -512,7 +537,7 @@ class AdminController extends Controller
     // 8. Form Pengembalian
     public function createPengembalian($id)
     {
-        $peminjaman = Peminjaman::with(['user', 'detailPinjam.alat'])->findOrFail($id);
+        $peminjaman = Peminjaman::with(['user', 'detailPinjams.alat'])->findOrFail($id);
 
         if (!in_array($peminjaman->status, ['dipinjam', 'telat'])) {
             return back()->with('error', 'Peminjaman ini sudah selesai dikembalikan.');
