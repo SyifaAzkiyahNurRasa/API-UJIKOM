@@ -8,6 +8,7 @@ use App\Models\Pengembalian;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class PetugasController extends Controller
 {
@@ -265,17 +266,30 @@ class PetugasController extends Controller
      */
     public function indexLaporan(Request $request)
     {
+        $statusOptions = [
+            'diajukan' => 'Diajukan',
+            'dipinjam' => 'Dipinjam',
+            'dikembalikan' => 'Dikembalikan',
+            'telat' => 'Telat',
+        ];
+        $status = $request->validate([
+            'status' => ['nullable', 'string', Rule::in(array_keys($statusOptions))],
+        ])['status'] ?? null;
+
         $laporan = Peminjaman::with([
             'user',
             'detailPinjams.alat',
             'pengembalian',
         ])
+            ->when($status, fn ($query) => $query->where('status', $status))
             ->latest()
             ->paginate(10)
             ->withQueryString();
 
         return view('petugas.laporan.index', [
-            'peminjaman' => $laporan
+            'peminjaman' => $laporan,
+            'status' => $status,
+            'statusOptions' => $statusOptions,
         ]);
     }
 }

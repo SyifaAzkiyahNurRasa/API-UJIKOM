@@ -295,14 +295,15 @@ Gunakan database dan file uji terisolasi. Buat data baru untuk setiap skenario y
 | ID | TITLE | PRECONDITION | STEPS | TEST DATA | EXPECTED RESULT | ACTUAL RESULT | STATUS |
 |---|---|---|---|---|---|---|---|
 | PETUGAS-LAPORAN-001 | Melihat rekap peminjaman | Petugas login; transaksi tersedia. | 1. Buka `/petugas/laporan`.<br>2. Periksa kolom peminjam, tanggal pinjam, rencana kembali, alat, status. | Minimal satu transaksi uji | Rekap menampilkan data peminjaman beserta item alat dan status; daftar dipaginasi. |  | NOT TESTED |
-| PETUGAS-LAPORAN-002 | Membuka dialog cetak browser | Halaman laporan tampil. | 1. Klik **Cetak Laporan**.<br>2. Periksa dialog cetak browser. | Browser dengan dukungan print | Pemanggilan `window.print()` membuka dialog cetak; format PDF/Excel tidak dijanjikan oleh implementasi. |  | NOT TESTED |
+| PETUGAS-LAPORAN-002 | Membuka dialog cetak browser | Halaman laporan tampil. | 1. Klik **Cetak Laporan**.<br>2. Periksa pratinjau cetak. | Browser dengan dukungan print | Dialog cetak menampilkan judul dan tabel laporan saja; sidebar, navigasi, tombol cetak, dan logout tidak ikut tercetak. |  | NOT TESTED |
+| PETUGAS-LAPORAN-003 | Memfilter laporan berdasarkan status | Petugas login; tersedia transaksi dengan beberapa status. | 1. Buka `/petugas/laporan`.<br>2. Pilih status **Dipinjam**.<br>3. Klik **Terapkan**. | Transaksi `dipinjam` dan `dikembalikan` | Tabel hanya menampilkan transaksi berstatus `dipinjam`; pilihan filter tetap terlihat dan tautan pagination mempertahankan filter. |  | NOT TESTED |
 
 #### TEST CASE NEGATIF
 
 | ID | TITLE | PRECONDITION | STEPS | TEST DATA | EXPECTED RESULT | ACTUAL RESULT | STATUS |
 |---|---|---|---|---|---|---|---|
-| PETUGAS-LAPORAN-003 | Menampilkan laporan saat tidak ada transaksi | Database uji tidak memiliki peminjaman; Petugas login. | 1. Buka `/petugas/laporan`.<br>2. Periksa tabel. | Tidak ada data peminjaman | Tabel menampilkan “Belum ada data untuk laporan.” dan halaman tidak error. |  | NOT TESTED |
-| PETUGAS-LAPORAN-004 | Menolak Peminjam mengakses laporan Petugas | Login sebagai Peminjam. | 1. Akses `/petugas/laporan`.<br>2. Periksa respons. | Sesi Peminjam | Akses ditolak oleh middleware role. |  | NOT TESTED |
+| PETUGAS-LAPORAN-004 | Menampilkan laporan saat tidak ada transaksi | Database uji tidak memiliki peminjaman; Petugas login. | 1. Buka `/petugas/laporan`.<br>2. Periksa tabel. | Tidak ada data peminjaman | Tabel menampilkan “Belum ada data untuk laporan.” dan halaman tidak error. |  | NOT TESTED |
+| PETUGAS-LAPORAN-005 | Menolak Peminjam mengakses laporan Petugas | Login sebagai Peminjam. | 1. Akses `/petugas/laporan`.<br>2. Periksa respons. | Sesi Peminjam | Akses ditolak oleh middleware role. |  | NOT TESTED |
 
 ### F. Otorisasi Petugas
 
