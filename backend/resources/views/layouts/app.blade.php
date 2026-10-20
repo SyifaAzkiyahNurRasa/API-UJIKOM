@@ -157,6 +157,17 @@
                             <span>Mengajukan Peminjaman</span>
                         </a>
 
+                        {{-- Riwayat Peminjaman --}}
+                        <a href="{{ route('peminjam.riwayat') }}"
+                            class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 hover:translate-x-1 {{ request()->routeIs('peminjam.riwayat') ? 'bg-slate-800/60 text-white border border-slate-700/50 shadow-sm' : 'text-slate-400 hover:bg-slate-800/40 hover:text-white' }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8v4l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z">
+                                </path>
+                            </svg>
+                            <span>Riwayat Peminjaman</span>
+                        </a>
+
                         {{-- Mengembalikan Alat --}}
                         <a href="{{ route('peminjam.pengembalian') }}"
                             class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 hover:translate-x-1 {{ request()->routeIs('peminjam.pengembalian*') ? 'bg-slate-800/60 text-white border border-slate-700/50 shadow-sm' : 'text-slate-400 hover:bg-slate-800/40 hover:text-white' }}">

@@ -22,12 +22,6 @@
                 </p>
             </div>
 
-            <a href="{{ route('peminjam.katalog') }}"
-               class="px-5 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition text-center">
-
-                + Ajukan Peminjaman
-
-            </a>
 
         </div>
 
@@ -82,7 +76,7 @@
 
                     @forelse($peminjaman as $pinjam)
 
-                        @foreach($pinjam->detailPinjam as $detail)
+                        @forelse($pinjam->detailPinjams as $detail)
 
                             <tr class="hover:bg-gray-50">
 
@@ -148,22 +142,22 @@
                                             Diajukan
                                         </span>
 
-                                    @elseif($pinjam->status === 'disetujui')
+                                    @elseif($pinjam->status === 'dipinjam' || $pinjam->status === 'disetujui')
 
                                         <span class="inline-flex px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">
-                                            Disetujui
+                                            {{ $pinjam->status === 'dipinjam' ? 'Dipinjam' : 'Disetujui' }}
                                         </span>
 
-                                    @elseif($pinjam->status === 'ditolak')
+                                    @elseif($pinjam->status === 'telat' || $pinjam->status === 'ditolak')
 
                                         <span class="inline-flex px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
-                                            Ditolak
+                                            {{ $pinjam->status === 'telat' ? 'Terlambat' : 'Ditolak' }}
                                         </span>
 
-                                    @elseif($pinjam->status === 'selesai')
+                                    @elseif($pinjam->status === 'dikembalikan' || $pinjam->status === 'selesai')
 
                                         <span class="inline-flex px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
-                                            Selesai
+                                            {{ $pinjam->status === 'dikembalikan' ? 'Dikembalikan' : 'Selesai' }}
                                         </span>
 
                                     @else
@@ -178,7 +172,15 @@
 
                             </tr>
 
-                        @endforeach
+                        @empty
+
+                            <tr>
+                                <td colspan="7" class="px-6 py-4 text-center text-gray-500">
+                                    Detail alat tidak tersedia.
+                                </td>
+                            </tr>
+
+                        @endforelse
 
                     @empty
 

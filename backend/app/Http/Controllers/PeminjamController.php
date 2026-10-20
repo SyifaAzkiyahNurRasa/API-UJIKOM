@@ -170,14 +170,14 @@ class PeminjamController extends Controller
     public function riwayatPeminjaman()
     {
         $peminjaman = Peminjaman::with([
-            'detailPinjams.alat',
+            'detailPinjams.alat.kategori',
             'pengembalian'
         ])
-            ->where('user_id', auth()->id())
+            ->where('user_id', auth()->id() )
             ->latest()
             ->get();
 
-        return view('peminjam.peminjaman', compact('peminjaman'));
+        return view('peminjam.riwayat', compact('peminjaman'));
     }
 
     // HALAMAN PENGEMBALIAN
