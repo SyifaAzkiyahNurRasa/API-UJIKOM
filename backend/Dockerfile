@@ -1,5 +1,5 @@
 # 1. Gunakan image dasar PHP versi CLI
-FROM php:8.4-cli
+FROM php:8.5-cli
 
 # 2. Install dependensi sistem dasar dan ekstensi PHP
 RUN apt-get update && apt-get install -y libzip-dev zip unzip && docker-php-ext-install pdo pdo_mysql zip

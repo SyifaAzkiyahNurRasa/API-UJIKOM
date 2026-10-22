@@ -1,3 +1,4 @@
+
 @extends('layouts.app')
 
 @section('title', 'Pengembalian Alat - Panel Petugas')
@@ -33,7 +34,6 @@
         <h2 class="text-lg font-bold text-gray-800">
             Konfirmasi Pengembalian
         </h2>
-
         <p class="text-sm text-gray-500 mt-1">
             Periksa kondisi alat sebelum mengonfirmasi pengembalian.
         </p>
@@ -65,7 +65,6 @@
             <label class="block text-gray-700 text-sm font-semibold mb-2">
                 Tanggal Pinjam
             </label>
-
             <div class="px-3 py-2 bg-gray-100 border border-gray-200 rounded-lg text-sm">
                 {{ \Carbon\Carbon::parse($peminjaman->tgl_pinjam)->locale('id')->translatedFormat('d F Y, H:i') }}
             </div>
@@ -75,7 +74,6 @@
             <label class="block text-gray-700 text-sm font-semibold mb-2">
                 Rencana Kembali
             </label>
-
             <div class="px-3 py-2 bg-gray-100 border border-gray-200 rounded-lg text-sm">
                 {{ \Carbon\Carbon::parse($peminjaman->tgl_kembali_plan)->locale('id')->translatedFormat('d F Y, H:i') }}
             </div>
@@ -85,22 +83,17 @@
 
     {{-- Alat --}}
     <div class="mb-4">
-
         <label class="block text-gray-700 text-sm font-semibold mb-2">
             Alat yang Dipinjam
         </label>
 
         <div class="border border-gray-200 rounded-lg overflow-hidden">
-
-            @foreach($peminjaman->detailPinjams as $detail)
-
+            @forelse($peminjaman->detailPinjams as $detail)
                 <div class="flex justify-between items-center px-4 py-3 border-b last:border-b-0">
-
                     <div>
                         <div class="font-semibold text-gray-800">
                             {{ $detail->alat->nama_alat ?? 'Alat Dihapus' }}
                         </div>
-
                         <div class="text-xs text-gray-500">
                             Jumlah dipinjam: {{ $detail->jumlah }} pcs
                         </div>
@@ -109,117 +102,80 @@
                     <div class="text-sm font-semibold text-gray-700">
                         {{ $detail->jumlah }} pcs
                     </div>
-
                 </div>
-
-            @endforeach
-
+            @empty
+                <div class="px-4 py-3 text-sm text-gray-500">
+                    Tidak ada detail alat pada peminjaman ini.
+                </div>
+            @endforelse
         </div>
-
     </div>
 
     {{-- Perhitungan Denda Keterlambatan --}}
     @php
-
         $tanggalRencana = \Carbon\Carbon::parse($peminjaman->tgl_kembali_plan);
-        $tanggalSekarang = \Carbon\Carbon::now();
+        $tanggalSekarang = now();
+
         $terlambat = $tanggalSekarang->gt($tanggalRencana);
 
-        if ($terlambat) {
-            $hariTerlambat = $tanggalRencana->copy()->startOfDay()->diffInDays($tanggalSekarang->copy()->startOfDay());
-        } else {
-            $hariTerlambat = 0;
-        }
+        $hariTerlambat = $terlambat
+            ? (int) $tanggalRencana->copy()->startOfDay()
+                ->diffInDays($tanggalSekarang->copy()->startOfDay())
+            : 0;
 
         $dendaPerHari = 5000;
         $totalDendaKeterlambatan = $hariTerlambat * $dendaPerHari;
-
     @endphp
 
     {{-- Informasi Pengembalian --}}
     <div class="mb-6">
-
         <label class="block text-gray-700 text-sm font-semibold mb-2">
             Informasi Pengembalian
         </label>
 
-        <div class="border rounded-lg p-4
-            {{ $terlambat
-                ? 'bg-red-50 border-red-200'
-                : 'bg-emerald-50 border-emerald-200' }}">
+        <div class="border rounded-lg p-4 {{ $terlambat ? 'bg-red-50 border-red-200' : 'bg-emerald-50 border-emerald-200' }}">
 
-            {{-- Tanggal Pengembalian --}}
             <div class="flex justify-between text-sm mb-2">
-
-                <span class="text-gray-600">
-                    Tanggal Pengembalian
-                </span>
-
+                <span class="text-gray-600">Tanggal Pengembalian</span>
                 <span class="font-semibold text-gray-800">
                     {{ $tanggalSekarang->locale('id')->translatedFormat('d F Y, H:i') }}
                 </span>
-
             </div>
 
-            {{-- Keterlambatan --}}
             <div class="flex justify-between text-sm mb-2">
-
-                <span class="text-gray-600">
-                    Keterlambatan
-                </span>
-
-                <span class="font-semibold
-                    {{ $terlambat ? 'text-red-600' : 'text-emerald-600' }}">
-
+                <span class="text-gray-600">Keterlambatan</span>
+                <span class="font-semibold {{ $terlambat ? 'text-red-600' : 'text-emerald-600' }}">
                     {{ $hariTerlambat }} hari
-
                 </span>
-
             </div>
 
-            {{-- Denda Keterlambatan --}}
             <div class="flex justify-between text-sm mb-2">
-
-                <span class="text-gray-600">
-                    Denda Keterlambatan
-                </span>
-
+                <span class="text-gray-600">Denda Keterlambatan</span>
                 <span class="font-semibold text-gray-800">
                     Rp {{ number_format($totalDendaKeterlambatan, 0, ',', '.') }}
                 </span>
-
             </div>
 
-            {{-- Denda Kerusakan --}}
             <div class="flex justify-between text-sm">
-
-                <span class="text-gray-600">
-                    Denda Kerusakan
-                </span>
-
+                <span class="text-gray-600">Denda Kerusakan</span>
                 <span class="font-semibold text-gray-800">
                     Diisi manual oleh Petugas
                 </span>
-
             </div>
 
             @if($terlambat)
-
                 <div class="mt-3 text-xs text-red-700">
                     Waktu pengembalian sudah melewati batas.
-                    Denda Rp 5.000 dihitung per hari kalender (saat ini {{ $hariTerlambat }} hari).
+                    Denda Rp 5.000 dihitung per hari kalender
+                    (saat ini {{ $hariTerlambat }} hari).
                 </div>
-
             @else
-
                 <div class="mt-3 text-xs text-emerald-700">
                     Pengembalian tepat waktu. Tidak ada denda keterlambatan.
                 </div>
-
             @endif
 
         </div>
-
     </div>
 
     {{-- FORM PROSES PENGEMBALIAN --}}
@@ -230,49 +186,32 @@
 
         @csrf
 
-        {{-- Route Petugas menggunakan PUT --}}
-        @method('PUT')
+        {{-- PENTING: Tidak menggunakan @method('PUT') --}}
 
         {{-- Kondisi Alat --}}
         <div class="mb-4">
-
-            <label class="block text-gray-700 text-sm font-semibold mb-2">
+            <label for="kondisi_kembali" class="block text-gray-700 text-sm font-semibold mb-2">
                 Kondisi Saat Dikembalikan
             </label>
 
             <select
                 name="kondisi_kembali"
+                id="kondisi_kembali"
                 required
                 class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
 
-                <option value="">
-                    -- Pilih Kondisi --
-                </option>
-
-                <option value="Baik">
-                    Baik
-                </option>
-
-                <option value="Rusak Ringan">
-                    Rusak Ringan
-                </option>
-
-                <option value="Rusak Berat">
-                    Rusak Berat
-                </option>
-
-                <option value="Tidak Lengkap">
-                    Tidak Lengkap
-                </option>
+                <option value="">-- Pilih Kondisi --</option>
+                <option value="Baik" {{ old('kondisi_kembali') == 'Baik' ? 'selected' : '' }}>Baik</option>
+                <option value="Rusak Ringan" {{ old('kondisi_kembali') == 'Rusak Ringan' ? 'selected' : '' }}>Rusak Ringan</option>
+                <option value="Rusak Berat" {{ old('kondisi_kembali') == 'Rusak Berat' ? 'selected' : '' }}>Rusak Berat</option>
+                <option value="Tidak Lengkap" {{ old('kondisi_kembali') == 'Tidak Lengkap' ? 'selected' : '' }}>Tidak Lengkap</option>
 
             </select>
-
         </div>
 
         {{-- Denda Kerusakan --}}
         <div class="mb-6">
-
-            <label class="block text-gray-700 text-sm font-semibold mb-2">
+            <label for="denda_kerusakan" class="block text-gray-700 text-sm font-semibold mb-2">
                 Denda Kerusakan
             </label>
 
@@ -281,58 +220,40 @@
                 name="denda_kerusakan"
                 id="denda_kerusakan"
                 min="0"
-                value="0"
+                step="1"
+                value="{{ old('denda_kerusakan', 0) }}"
+                required
                 class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                placeholder="Masukkan denda kerusakan"
-                oninput="hitungTotalDenda(this.value)"
-            >
+                placeholder="Masukkan denda kerusakan">
 
             <p class="text-xs text-gray-500 mt-1">
                 Isi 0 jika tidak ada kerusakan.
             </p>
-
         </div>
 
         {{-- TOTAL DENDA --}}
         <div class="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-
             <div class="flex justify-between items-center">
-
-                <span class="text-gray-700 font-semibold">
-                    Total Denda
+                <span class="text-gray-700 font-semibold">Total Denda</span>
+                <span id="total_denda" class="text-lg font-bold text-blue-600">
+                    Rp {{ number_format($totalDendaKeterlambatan + (int) old('denda_kerusakan', 0), 0, ',', '.') }}
                 </span>
-
-                <span
-                    id="total_denda"
-                    class="text-lg font-bold text-blue-600">
-
-                    Rp {{ number_format($totalDendaKeterlambatan, 0, ',', '.') }}
-
-                </span>
-
             </div>
-
         </div>
 
         {{-- BUTTON --}}
         <div class="flex justify-end space-x-2">
-
             <a
                 href="{{ route('petugas.pengembalian.index') }}"
                 class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg text-sm font-semibold transition">
-
                 Batal
-
             </a>
 
             <button
                 type="submit"
                 class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition">
-
                 Konfirmasi Pengembalian
-
             </button>
-
         </div>
 
     </form>
@@ -340,17 +261,27 @@
 </div>
 
 <script>
-    function hitungTotalDenda(nilaiKerusakan) {
+    document.addEventListener('DOMContentLoaded', function () {
+        const inputKerusakan = document.getElementById('denda_kerusakan');
+        const totalDenda = document.getElementById('total_denda');
 
         const dendaKeterlambatan = {{ $totalDendaKeterlambatan }};
 
-        const dendaKerusakan = parseInt(nilaiKerusakan) || 0;
+        function hitungTotalDenda() {
+            const dendaKerusakan = Math.max(
+                0,
+                parseInt(inputKerusakan.value, 10) || 0
+            );
 
-        const total = dendaKeterlambatan + dendaKerusakan;
+            const total = dendaKeterlambatan + dendaKerusakan;
 
-        document.getElementById('total_denda').textContent =
-            'Rp ' + total.toLocaleString('id-ID');
-    }
+            totalDenda.textContent = 'Rp ' + total.toLocaleString('id-ID');
+        }
+
+        inputKerusakan.addEventListener('input', hitungTotalDenda);
+
+        hitungTotalDenda();
+    });
 </script>
 
 @endsection

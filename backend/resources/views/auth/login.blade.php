@@ -53,6 +53,16 @@
                 class="w-full bg-blue-600 text-white font-semibold py-2 rounded-lg hover:bg-blue-700 transition duration-200">
                 Masuk
             </button>
+
+            <!-- Link ke halaman register -->
+             <p class = "text-center text-sm text-gray-600 mt-5">
+                Belum punya akun?
+                <a href = "{{route('register')}}"
+                class = "text-blue-600 font-semibold hover:text-blue-700">
+                    Daftar sebagai Peminjam
+                </a>
+            </p>
+
         </form>
     </div>
 

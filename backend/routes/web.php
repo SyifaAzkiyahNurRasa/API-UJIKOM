@@ -7,22 +7,13 @@ use App\Http\Controllers\PeminjamController;
 use App\Http\Controllers\AuthController;
 
 
-/*
-|--------------------------------------------------------------------------
-| HALAMAN UTAMA
-|--------------------------------------------------------------------------
-*/
+//HALAMAN UTAMA
 
 Route::get('/', function () {
     return view('welcome');
 });
 
-
-/*
-|--------------------------------------------------------------------------
-| ADMIN
-|--------------------------------------------------------------------------
-*/
+//ADMIN
 
 Route::middleware(['auth', 'role:admin'])
     ->prefix('admin')
@@ -34,11 +25,7 @@ Route::middleware(['auth', 'role:admin'])
             ->name('dashboard');
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | CRUD KATEGORI
-        |--------------------------------------------------------------------------
-        */
+        //crud kategori
 
         Route::get('/kategori', [AdminController::class, 'indexKategori'])
             ->name('kategori.index');
@@ -59,11 +46,7 @@ Route::middleware(['auth', 'role:admin'])
             ->name('kategori.destroy');
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | CRUD ALAT
-        |--------------------------------------------------------------------------
-        */
+       //crud alat
 
         Route::get('/alat', [AdminController::class, 'indexAlat'])
             ->name('alat.index');
@@ -84,11 +67,7 @@ Route::middleware(['auth', 'role:admin'])
             ->name('alat.destroy');
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | CRUD USER
-        |--------------------------------------------------------------------------
-        */
+        //crud user
 
         Route::get('/users', [AdminController::class, 'indexUser'])
             ->name('user.index');
@@ -109,11 +88,7 @@ Route::middleware(['auth', 'role:admin'])
             ->name('user.destroy');
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | CRUD PEMINJAMAN
-        |--------------------------------------------------------------------------
-        */
+        //crud peminjaman
 
         Route::get('/peminjaman', [AdminController::class, 'indexPeminjaman'])
             ->name('peminjaman.index');
@@ -131,11 +106,7 @@ Route::middleware(['auth', 'role:admin'])
             ->name('peminjaman.destroy');
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | KELOLA PENGEMBALIAN ADMIN
-        |--------------------------------------------------------------------------
-        */
+        //kelola pengembalian admin
 
         // Daftar pengembalian
         Route::get('/pengembalian', [AdminController::class, 'indexPengembalian'])
@@ -155,22 +126,14 @@ Route::middleware(['auth', 'role:admin'])
     });
 
 
-/*
-|--------------------------------------------------------------------------
-| PETUGAS
-|--------------------------------------------------------------------------
-*/
+//PETUGAS
 
 Route::middleware(['auth', 'role:petugas,admin'])
     ->prefix('petugas')
     ->name('petugas.')
     ->group(function () {
 
-        /*
-        |--------------------------------------------------------------------------
-        | PEMINJAMAN & PERSETUJUAN
-        |--------------------------------------------------------------------------
-        */
+        //peminjaman dan persetujuan
 
         Route::get('/peminjaman', [PetugasController::class, 'indexPeminjaman'])
             ->name('peminjaman.index');
@@ -182,11 +145,7 @@ Route::middleware(['auth', 'role:petugas,admin'])
             ->name('peminjaman.tolak');
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | PENGEMBALIAN
-        |--------------------------------------------------------------------------
-        */
+        //pengembalian
 
         // Daftar pengembalian
         Route::get('/pengembalian', [PetugasController::class, 'indexPengembalian'])
@@ -202,43 +161,27 @@ Route::middleware(['auth', 'role:petugas,admin'])
             ->name('pengembalian.proses');
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | LAPORAN
-        |--------------------------------------------------------------------------
-        */
+        //Laporan
 
         Route::get('/laporan', [PetugasController::class, 'indexLaporan'])
             ->name('laporan.index');
     });
 
 
-/*
-|--------------------------------------------------------------------------
-| PEMINJAM
-|--------------------------------------------------------------------------
-*/
+//PEMINJAM
 
 Route::middleware(['auth', 'role:peminjam'])
     ->prefix('peminjam')
     ->name('peminjam.')
     ->group(function () {
 
-        /*
-        |--------------------------------------------------------------------------
-        | DASHBOARD
-        |--------------------------------------------------------------------------
-        */
+        //dashboard
 
         Route::get('/dashboard', [PeminjamController::class, 'dashboard'])
             ->name('dashboard');
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | KATALOG ALAT
-        |--------------------------------------------------------------------------
-        */
+        //Katalog alat
 
         Route::get('/alat', [PeminjamController::class, 'katalogAlat'])
             ->name('katalog');
@@ -247,11 +190,7 @@ Route::middleware(['auth', 'role:peminjam'])
             ->name('alat.detail');
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | PENGAJUAN PEMINJAMAN
-        |--------------------------------------------------------------------------
-        */
+        //pengajuan peminjaman
 
         Route::get('/peminjaman', [PeminjamController::class, 'formPeminjaman'])
             ->name('peminjaman');
@@ -260,21 +199,13 @@ Route::middleware(['auth', 'role:peminjam'])
             ->name('peminjaman.ajukan');
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | RIWAYAT PEMINJAMAN
-        |--------------------------------------------------------------------------
-        */
+        //riwayat peminjaman
 
         Route::get('/peminjaman-saya', [PeminjamController::class, 'riwayatPeminjaman'])
             ->name('riwayat');
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | PENGEMBALIAN
-        |--------------------------------------------------------------------------
-        */
+        //pengembalian
 
         Route::get('/pengembalian', [PeminjamController::class, 'pengembalian'])
             ->name('pengembalian');
@@ -284,26 +215,32 @@ Route::middleware(['auth', 'role:peminjam'])
     });
 
 
-/*
-|--------------------------------------------------------------------------
-| ROUTE TAMU
-|--------------------------------------------------------------------------
-*/
+
+ // ROUTE TAMU
 
 Route::middleware('guest')->group(function () {
 
+    // Menampilkan halaman login
     Route::get('/login', [AuthController::class, 'showLoginForm'])
         ->name('login');
 
-    Route::post('/login', [AuthController::class, 'login']);
+    // Memproses login
+    Route::post('/login', [AuthController::class, 'login'])
+        ->name('login.process');
+
+    // Menampilkan halaman register
+    Route::get('/register', [AuthController::class, 'showRegisterForm'])
+        ->name('register');
+
+    // Memproses registrasi akun baru
+    Route::post('/register', [AuthController::class, 'register'])
+        ->name('register.store');
+
 });
 
 
-/*
-|--------------------------------------------------------------------------
-| LOGOUT
-|--------------------------------------------------------------------------
-*/
+
+//LOGOUT
 
 Route::post('/logout', [AuthController::class, 'logout'])
     ->name('logout');
