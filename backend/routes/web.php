@@ -5,6 +5,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\PetugasController;
 use App\Http\Controllers\PeminjamController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ProfileController;
 
 
 //HALAMAN UTAMA
@@ -13,7 +14,17 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-//ADMIN
+Route::middleware('auth')->group(function () {
+    Route::get('/profil', [ProfileController::class, 'show'])->name('profile.show');
+    Route::put('/profil', [ProfileController::class, 'update'])->name('profile.update');
+});
+
+
+/*
+|--------------------------------------------------------------------------
+| ADMIN
+|--------------------------------------------------------------------------
+*/
 
 Route::middleware(['auth', 'role:admin'])
     ->prefix('admin')
@@ -224,18 +235,13 @@ Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])
         ->name('login');
 
-    // Memproses login
-    Route::post('/login', [AuthController::class, 'login'])
-        ->name('login.process');
+    Route::post('/login', [AuthController::class, 'login']);
 
-    // Menampilkan halaman register
     Route::get('/register', [AuthController::class, 'showRegisterForm'])
         ->name('register');
 
-    // Memproses registrasi akun baru
     Route::post('/register', [AuthController::class, 'register'])
         ->name('register.store');
-
 });
 
 

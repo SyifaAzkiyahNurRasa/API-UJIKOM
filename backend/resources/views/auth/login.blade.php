@@ -54,12 +54,11 @@
                 Masuk
             </button>
 
-            <!-- Link ke halaman register -->
-             <p class = "text-center text-sm text-gray-600 mt-5">
+            <!-- Link ke Halaman Register -->
+            <p class="text-center text-sm mt-4">
                 Belum punya akun?
-                <a href = "{{route('register')}}"
-                class = "text-blue-600 font-semibold hover:text-blue-700">
-                    Daftar sebagai Peminjam
+                <a href="{{ route('register') }}" class="text-blue-600">
+                    Register
                 </a>
             </p>
 

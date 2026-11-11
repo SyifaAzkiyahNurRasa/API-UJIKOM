@@ -191,6 +191,13 @@
                     <span class="font-semibold text-slate-200 text-sm">
                         {{ auth()->user()->name }}
                     </span>
+                    <a href="{{ route('profile.show') }}"
+                       class="mt-4 flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition {{ request()->routeIs('profile.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                        <span class="flex h-9 w-9 items-center justify-center rounded-full bg-indigo-600 text-white">
+                            <i class="fa-regular fa-user"></i>
+                        </span>
+                        <span>Profil Saya</span>
+                    </a>
                 @endauth
             </div>
 
